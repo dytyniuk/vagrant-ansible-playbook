@@ -1,0 +1,11 @@
+---
+- name: Bootstrap machine
+  hosts: all
+  become: yes
+
+  roles:
+    - common
+    - percona
+    - php
+    - nginx
+    - nginx-php-fpm

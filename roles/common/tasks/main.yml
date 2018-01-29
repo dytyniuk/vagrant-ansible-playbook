@@ -1,0 +1,39 @@
+---
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: Add IUS repository
+  yum:
+    name: https://centos7.iuscommunity.org/ius-release.rpm
+    state: present
+
+- name: Install EPEL
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install basic required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - vim
+    - wget
+    - curl
+    - htop
+    - telnet
+    - tmux2u
+    - git2u
+    - mc
+    - python
+    - pwgen
+
+- name: Deploy tmux config
+  copy:
+    src: files/tmux.conf
+    dest: /home/vagrant/.tmux.conf
+
+- name: Switch timezone to Europe/Kiev
+  timezone:
+    name: Europe/Kiev

@@ -1,0 +1,31 @@
+---
+- name: Add Percona repository
+  yum:
+    name: http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm
+    state: present
+
+- name: Install Percona and other utilities packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - Percona-Server-server-57
+    - Percona-Server-client-57
+    - percona-toolkit
+    - innotop
+    - MySQL-python
+
+- name: Enable Percona server and make it start on boot
+  service:
+    name: mysql
+    enabled: yes
+    state: started
+
+- name: Check whether .my.cnf already exists for root
+  stat:
+    path: /root/.my.cnf
+  register: root_my_cnf
+
+- name: Secure MySQL installation
+  include_tasks: secure-installation.yml
+  when: root_my_cnf.stat.exists == False

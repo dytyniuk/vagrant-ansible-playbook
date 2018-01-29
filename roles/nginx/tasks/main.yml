@@ -1,0 +1,24 @@
+---
+- name: Install NGINX web server
+  yum:
+    name: nginx
+    state: present
+
+- name: Alter NGINX config - work under vagrant user, increase worker processes
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }};"
+    backrefs: yes
+  with_items:
+    - { regexp: "^user", line: "user vagrant" }
+    - { regexp: "^worker_processes", line: "worker_processes 4" }
+    - { regexp: "^(.*?)sendfile", line: "\\1sendfile off" }
+    - { regexp: "^(.*?)server_name", line: "\\1server_name {{ ansible_nodename }}" }
+    - { regexp: "^([^#].*?)root", line: "\\1root /vagrant/www" }
+
+- name: Enable NGINX and make it start on boot
+  service:
+    name: nginx
+    enabled: yes
+    state: started

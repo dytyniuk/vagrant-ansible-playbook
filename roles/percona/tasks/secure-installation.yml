@@ -1,0 +1,39 @@
+---
+- name: Get temporary password and generate a new one
+  shell: "grep 'temporary password' /var/log/mysqld.log | awk 'NF{ print $NF }'"
+  register: mysql_root_password
+
+- debug:
+    msg: "MySQL temporary password: {{ mysql_root_password.stdout }}"
+
+- name: Generate my.cnf for root
+  template:
+    src: root-my.cnf.j2
+    dest: "/root/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Generate new MySQL root password
+  command: pwgen -N1 -ns 10
+  register: mysql_root_password
+
+- debug:
+    msg: "MySQL root password to be set: {{ mysql_root_password.stdout }}"
+
+- name: Change MySQL root password
+  shell: "mysql --connect-expired-password -e \"SET GLOBAL validate_password_special_char_count=0; ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password.stdout }}'\""
+
+- name: Re-generate my.cnf for root with new password
+  template:
+    src: root-my.cnf.j2
+    dest: "/root/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Remove anonymous users
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent

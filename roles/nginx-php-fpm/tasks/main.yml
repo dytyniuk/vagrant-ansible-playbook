@@ -1,0 +1,38 @@
+---
+- name: Install Nginx configuration for PHP-FPM
+  yum:
+    name: php71u-fpm-nginx
+    state: present
+
+- name: Alter PHP-FPM config - work under vagrant user and listen to UNIX socket
+  ini_file:
+    path: /etc/php-fpm.d/www.conf
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { section: "www", option: "user", value: "vagrant" }
+    - { section: "www", option: "listen", value: "/run/php-fpm/www.sock" }
+    - { section: "www", option: "listen.owner", value: "vagrant" }
+
+- name: Enable PHP-FPM service and make it start on boot
+  service:
+    name: php-fpm
+    enabled: yes
+    state: started
+
+- name: Switch Nginx FastCGI to Unix socket
+  lineinfile:
+    path: /etc/nginx/conf.d/php-fpm.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }};"
+    backrefs: yes
+  with_items:
+    - { regexp: "^(.*)[^#]server 127.0.0.1:9000", line: "\\1#server 127.0.0.1:9000" }
+    - { regexp: "^(.*)#server unix", line: "\\1server unix:/run/php-fpm/www.sock" }
+  notify: Restart Nginx
+
+- name: Deploy phpinfo page
+  copy:
+    src: "files/info.php"
+    dest: "/vagrant/www/info.php"

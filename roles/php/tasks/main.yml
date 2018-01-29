@@ -1,0 +1,24 @@
+---
+- name: Install PHP CLI and required modules
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php71u-cli
+    - php71u-gd
+    - php71u-gmp
+    - php71u-intl
+    - php71u-mbstring
+    - php71u-mysqlnd
+    - php71u-pdo
+    - php71u-pecl-xdebug
+    - php71u-soap
+    - php71u-xml
+    - php71u-xmlrpc
+
+- name: Set default timezone to Europe/Kiev
+  ini_file:
+    path: /etc/php.ini
+    section: "Date"
+    option: "date.timezone"
+    value: "Europe/Kiev"
